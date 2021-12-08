@@ -1,0 +1,204 @@
+---
+title: "Project 2D"
+output: html_notebook
+---
+Scientific Question: 
+Can Type I Diabetes treatments used for humans be used as an effective treatment for certain animals? 
+
+Scientific Background: 
+Insulin is a endocrine peptide hormone which binds to receptors bound on the plasma membrane of the body's cells in order to signal the cells' collection of glucose from the bloodstream (Peterson and Shulman 2018). Type I Diabetes occurs when Type I Diabetes, also known as insulin-dependent diabetes, occurs as a result of the loss of pancreatic beta cells which are responsible for the production of insulin (Jun and Yoon 2001), resulting in elevated blood glucose levels. 
+
+Type I Diabetes has been recorded to occur in domesticated animals such as dogs and cats. For example, it has been found that canines experience Type I Diabetes as a result of a loss of pancreatic beta cells or hormonal issues, with similar autoimmune issues as humans and are in need of supplemental insulin therapy (Catchpole et. al. 2005). Similarly cats have been studied to experience diabetes, and are in fact irresponsible to many other animal diabetes treatments as a result of other undiagnosed disorders (Neslon et. al. 2009). These similarities between the onset of diabetes in human and animals begs the research question presented in order to test if these animals can benefit from human insulin therapy. 
+
+Scientific Hypothesis: 
+If the insulin protein sequence for an organism is similar to that of the sequence of human insulin, then it may positively benefit from, insulin focused, diabetes treatments that are used for humans. 
+
+Description of Analysis:
+Here a BLAST Search of the amino acid sequence of Homo Sapien (human) insulin (obtained from UniProt). This will allow the user to narrow down a list of BLAST Hit sequences of organisms that have high similarity.
+After obtaining a few BLAST Hit sequences, a sequence from an organism that is known to not have Type I Diabetes was obtained from UniProt, as this will act as a control group. A series of pairwise sequence alignments between the original human insulin strand, the BLAST Hit, and the control organism will be performed. These values will for a secondary mode of comparison in order to numerically illustrate the similarities between human and animal insulin.
+Finally, the data from the pairwise sequence alignments will be used to conduct a heatmap in order to visually show the similarities between human insulin and certain animals’ insulin. Dotplots will also be generated, which will compare each respective organisms' sequence to the human sequence individually. 
+
+Loading in Packages:
+The following packages will be needed to perform this code:
+1) BiocManager: Is a package which can be used to implement many other packages within Bioconductor in order to perform genome and statistical analyses. 
+
+2) BioStrings: Is a package within BiocManager that can be used to read as well as manipulate biological string sets such as DNA, RNA, and Amino Acids. 
+
+3) annotate: Is a package within BiocManager that can be used to create various types of plots. For instance, it can be used to generate Heatmaps. This package can also be used to conduct BLAST searches of protein or nucleotide sequences in order to find similar matching sequences.
+
+4) seqinr: This package can be used to analyze data as well as visualize DNA and protein sequences. For example, it can be used to perform a pariwise sequence alignment, in order to generate quantitative data that compares to biological sequence sets. 
+
+5) gplots: This package can be used to generate different types of plots in order to visualize data. 
+
+The following commands are needed to install, then call the necessary packages: 
+```{r}
+# if(!require.Namespace(BiocManager", quietly = TRUE)) install.packages("BiocManager")
+library(BiocManager)
+
+#BiocManager::install("Biostrings")
+library(Biostrings)
+
+#BiocManager::install("annotate')
+library(annotate)
+
+#install.packages("seqinr")
+library(seqinr)
+
+# install.packages("gplots")
+library(gplots)
+```
+
+Performing Bioinformatics Anlalysis:
+1. The following code will read the file called "human_insulin.fasta" which contains the amino acid sequence for Homo Sapien Insulin downloaded from UniProt. The variable is named as human_insulin.
+```{r}
+#Read the sequence
+human_insulin <- readAAStringSet("human_insulin.fasta", format="fasta", nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE, with.qualities=FALSE)
+
+#Print the sequence
+human_insulin
+```
+
+2. This code generates a function to convert the sequence (and later subsequent sequences) to a vector so it can be analyzed via BLAST Search.The varibale is named as human_insulin_vector.
+```{r}
+#Generate a function to convert sequences into a vector
+vector <- function(x) {
+  toString(x)
+}
+
+#convert human_insulin to a vector
+human_insulin_vector <- vector(human_insulin)
+
+#Print the sequence vector
+human_insulin_vector
+```
+
+3. The following code conducts a BLAST search of the human_insulin_vector sequence. BLAST is essentially a public bioinformatics database that allows researchers to find similarities between sequences (and can be done on both the nucleotide and protein level). The strength of similarities between the sequence under study and its potential matches in the database is calculated via statistical significance. 
+```{r}
+blastSequences(human_insulin_vector, "nr", hitListSize="10", filter="L", expect="1", program="blastp", as=c("data.frame"))
+```
+From this BLAST search, four hits were identified for further study as they had similar precentage of similarity (between 70-85%) and are thus viable for further comparison: Canus Lupis Familiaris (Dog), Felis Catus (Cat), and Equus Caballus (Horse), and Oryctolagus Cuniculus (European Rabbit). These organisms were also chosen as they are considered as domesticated pets in many societies. Please note that this BLAST Search in R may yield very similar hits as insulin is a very well studied sequence, therefore hits can also be obtained from conducting a manual BLAST Search from the BLAST database. 
+
+4. This code reads the sequences of the three selected hits and converts them to vectors using the function created in previous steps. They are stored as the variables canus_lupus_insulin_vector, felis_insulin_vector, horse_insulin_vector, and rabbit_insulin_vector respectively. 
+```{r}
+#Read the sequence of each BLAST Hit 
+canus_lupus_insulin <- readAAStringSet("canus_lupus_insulin.fasta", format="fasta", nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE, with.qualities=FALSE)
+felis_insulin <- readAAStringSet("felis_insulin.fasta", format="fasta", nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE, with.qualities=FALSE)
+horse_insulin <- readAAStringSet("horse_insulin.fasta", format="fasta", nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE, with.qualities=FALSE)
+rabbit_insulin <- readAAStringSet("rabbit_insulin.fasta", format="fasta", nrec=-1L, skip=0L, seek.first.rec=FALSE, use.names=TRUE, with.qualities=FALSE)
+
+#Convert each sequence to a vector using the function created in previous steps
+canus_lupus_insulin_vector <- vector(canus_lupus_insulin)
+felis_insulin_vector <- vector(felis_insulin)
+horse_insulin_vector <- vector(horse_insulin)
+rabbit_insulin_vector <- vector(rabbit_insulin)
+```
+
+5. This code performs a pairwise sequence alignment between the original data and each BLAST Hit. Pairwise sequence alignment is Bioinformatics method that can be used to identify regions of similarity between two sequences in order to indicate any possible functional or structural similarities. This code will output pairwise alignment scores for each comparison, with the larger scores indicating the most similarity. 
+```{r}
+#Perform a pairwise alignment between Humans and each organism 
+pairwiseAlignment(pattern = c("human_insulin_vector"), subject = "human_insulin_vector")
+pairwiseAlignment(pattern = c("human_insulin_vector"), subject = "canus_lupus_insulin_vector")
+pairwiseAlignment(pattern = c("human_insulin_vector"), subject = "felis_insulin_vector")
+pairwiseAlignment(pattern = c("human_insulin_vector"), subject = "horse_insulin_vector")
+pairwiseAlignment(pattern = c("human_insulin_vector"), subject = "rabbit_insulin_vector")
+
+#Perform a pairwise alignment between Dog and each remaining organism 
+pairwiseAlignment(pattern = c("canus_lupis_insulin_vector"), subject = "canus_lupus_insulin_vector")
+pairwiseAlignment(pattern = c("canus_lupus_insulin_vector"), subject = "felis_insulin_vector")
+pairwiseAlignment(pattern = c("canus_lupus_insulin_vector"), subject = "horse_insulin_vector")
+pairwiseAlignment(pattern = c("canus_lupus_insulin_vector"), subject = "rabbit_insulin_vector")
+
+#Perform a pairwise alignment between Cat and each remaining organism 
+pairwiseAlignment(pattern = c("felis_insulin_vector"), subject = "felis_insulin_vector")
+pairwiseAlignment(pattern = c("felis_insulin_vector"), subject = "horse_insulin_vector")
+pairwiseAlignment(pattern = c("felis_insulin_vector"), subject = "rabbit_insulin_vector")
+
+#Perform a pairwise alignment between Horse and each remaining organism
+pairwiseAlignment(pattern = c("horse_insulin_vector"), subject = "horse_insulin_vector")
+pairwiseAlignment(pattern = c("horse_insulin_vector"), subject = "rabbit_insulin_vector")
+
+#Perform a pairwise alignment between Rabbit and each remaining organism
+pairwiseAlignment(pattern = c("rabbit_insulin_vector"), subject = "rabbit_insulin_vector")
+```
+
+6. The following code organizes the data into a matrix in order to generate a Heatmap. The matrix is customized to indicate labels for each organism. The matrix is labeled with the variable pairwise_matrix. 
+```{r}
+# Store the pairwise alignment data for each organism into a vector where each vector is named under the variables human, dog, cat, horse, and rabbit
+human <- c(77.77263, 4.82786, 28.62613, 37.36372, 14.62613)
+dog <- c(4.82786, 88.52116, 3.46595,  -6.636267, 1.150141)
+cat <- c(28.62613, 3.46595,  73.64364, 25.80526, 23.36373)
+horse <- c(37.36372, -6.636267,  25.80526, 73.64364, 13.26151)
+rabbit <- c(14.62613, 1.150141, 23.36373, 13.26151, 79.57101)
+
+# Generate a four by four matrix with the above vectors as the data and name this matrix pairwise_matrix
+pairwise_matrix <- matrix(c(human, dog, cat, horse, rabbit), nrow = 5, byrow = TRUE)
+
+#Print the matrix in order to check that the values are located in the correct placement
+pairwise_matrix
+
+#Name the rows and columns 
+columns <- c("Human", "Dog", "Cat", "Horse", "Rabbit")
+  rows <- c("Human", "Dog", "Cat", "Horse", "Rabbit")
+
+colnames(pairwise_matrix) <- columns
+rownames(pairwise_matrix) <- rows
+
+#Print the matrix in order to check that labels have appeared correctly 
+pairwise_matrix
+```
+
+7. The following code will generate a Heatmap of the previously constructed matrix. A Heatmap is a Bioinformatics methods that can be used to visually represent large, or in this case small, amounts of gene expression data. The expression is illustrated using different shades of colors. 
+```{r}
+heatmap(pairwise_matrix)
+```
+Both axes of the plot indicate each respective organism. The darker the color, the closer the sequences are in similarity. 
+
+Plotting the Results:
+8. This code will convert the sequence data into a vector of chars using the s2c() function in order to generate three dotplots. Each vector of chars is named Human, Dog, Cat, Horse, and Rabbit respectively.  
+```{r}
+Human <- s2c(human_insulin_vector)
+Dog <- s2c(canus_lupus_insulin_vector)
+Cat <- s2c(felis_insulin_vector)
+Horse <- s2c(horse_insulin_vector)
+Rabbit <- s2c(rabbit_insulin_vector) 
+```
+
+9. The following code plots three Dotplots comparing the Human Insulin Sequence to each respective BLAST Hit. A Dotplot is another Bioinformatics used to visualize the comparison of two sequences in the form of a graph. The comparison can be used to visually identify regions between the sequences that are very similar. 
+```{r}
+#Dotplot comparing the Human and Dog sequences 
+dotPlot(Human, Dog, wsize = 1, wstep = 1, nmatch = 1, col = c("white", "black"), 
+xlab = deparse(substitute(Human)), ylab = deparse(substitute(Dog)))
+
+#Dotplot comparing the Human and Cat sequences
+dotPlot(Human, Cat, wsize = 1, wstep = 1, nmatch = 1, col = c("white", "black"), 
+xlab = deparse(substitute(Human)), ylab = deparse(substitute(Cat)))
+
+#Dotplot comparing the Human and Horse sequences
+dotPlot(Human, Horse, wsize = 1, wstep = 1, nmatch = 1, col = c("white", "black"), 
+xlab = deparse(substitute(Human)), ylab = deparse(substitute(Horse)))
+
+#Dotplot comparing the Human and Rabbit sequences
+dotPlot(Human, Rabbit, wsize = 1, wstep = 1, nmatch = 1, col = c("white", "black"), 
+xlab = deparse(substitute(Human)), ylab = deparse(substitute(Rabbit)))
+```
+In the Dotplots generated, the x-axis represented the human insulin sequence while the y-axis represents the respective insulin sequence of the organism of comparison.The diagonal line is included int he graph to help the user recognize how close in similarity the sequences are to one another.  
+
+Analysis of Results:
+The BLAST search verifies that there are many domestic animals that hold genetic similarity with human insulin, as Canus Lupis Familiaris (Dog), Felis Catus (Cat), and Equus Caballus (Horse), and Oryctolagus Cuniculus (European Rabbit) all appeared as BLAST Hit results with percentage similarity ranging between 60-85%. The Pairwise Sequence analysis is able to reveal more about the numeric degree to which these sequences are similar. It appears that humans and horses have optimal alignment (with the largest score of 37.36372), followed by cats (with a score of ), then rabbits (with a score of ), and finally dogs (with the lowest score of ). The numerical order of these pairwise sequence scores as well as BLAST Hit similarity suggests that all of these domesticated organisms can benefit from human insulin as a diabetic treatment, but horse may benefit the most from this group, followed by cats, rabbits, then dogs. 
+
+The Heatmap verifies the findings that humans and horses have the most similarities between insulin sequences, suggesting that humans could benefit the most from insulin focused diabetes treatment methods for humans. The darkest color of the heat map indicates that each sequence aligns the most with itself (as expected), then the next darkest shade visually verifies the large pairwise score between humans and horses while the lighter shade verifies the lower scores and this lower similarities between humans, and dogs. The Dotplot verifies the conclusions found in the data as the plot between humans and horses appears to have the most low complexity regions around the diagonal line, indicating high scores for these regions and thus greater similarity. 
+
+Overall these findings verify the similarities between human insulin and that of a handful of domesticated animals (especially horses and cats), suggesting that it may be a viable treatment option for individuals from these species that have Type I, insulin dependent diabetes. 
+
+Works Cited:
+“Blast: Basic Local Alignment Search Tool.” National Center for Biotechnology Information, U.S. National Library of Medicine, https://blast.ncbi.nlm.nih.gov/Blast.cgi.  
+
+Catchpole, B., et al. "Canine Diabetes Mellitus: Can Old Dogs Teach us New Tricks?." Diabetologia 48.10 (2005): 1948-1956.
+
+Jun, H. S., and J. W. Yoon. "The role of viruses in type I diabetes: two distinct cellular and molecular pathogenic mechanisms of virus-induced diabetes in animals." Diabetologia 44.3 (2001): 271-285.
+
+Nelson, Richard W., et al. "Field safety and efficacy of protamine zinc recombinant human insulin for treatment of diabetes mellitus in cats." Journal of veterinary internal medicine 23.4 (2009): 787-793.
+
+Petersen, Max C., and Gerald I. Shulman. "Mechanisms of insulin action and insulin resistance." Physiological reviews 98.4 (2018): 2133-2223.
+
+UniProt Consortium European Bioinformatics Institute Protein Information Resource SIB Swiss Institute of Bioinformatics. “Uniprot Consortium.” UniProt Consortium European Bioinformatics Institute Protein Information Resource SIB Swiss Institute of Bioinformatics, https://www.uniprot.org/. 
